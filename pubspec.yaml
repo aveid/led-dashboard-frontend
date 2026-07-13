@@ -1,0 +1,62 @@
+# =============================================================================
+# pubspec.yaml — манифест Flutter-проекта: зависимости и метаданные.
+#
+# Осознанно БЕЗ кодогена (freezed/json_serializable/build_runner): DTO пишем
+# вручную, поэтому проект запускается сразу после `flutter pub get`, без шага
+# генерации. См. frontend/CONTEXT.md §1 (примечание про отказ от кодогена).
+# =============================================================================
+
+name: led_dashboard
+description: "Внутренний дашборд учёта LED-экранов по Кыргызстану (Flutter Web)."
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"   # Color.withValues() доступен с 3.27
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # --- State / DI ---
+  flutter_riverpod: ^2.5.1   # провайдеры, DI, тестируемость
+
+  # --- Роутинг ---
+  go_router: ^14.2.0         # декларативная навигация, URL для веба
+
+  # --- Сеть ---
+  dio: ^5.5.0                # HTTP-клиент, интерсепторы (JWT), удобные ошибки
+
+  # --- Хранение токена ---
+  flutter_secure_storage: ^9.2.2  # безопасное хранение JWT
+
+  # --- Карта ---
+  flutter_map: ^7.0.2        # OpenStreetMap, маркеры (FR-1)
+  # Кластеризация маркеров (FR-1.5). Мажор пакета НЕ совпадает с номером flutter_map:
+  # линейка 1.x кластера рассчитана на flutter_map 7.x (1.4.0 требует flutter_map
+  # >=7.0.0 <8.0.0). Пин под наш flutter_map 7 — не 8.x (та требует flutter_map ^8).
+  flutter_map_marker_cluster: ^1.4.0
+  flutter_map_cancellable_tile_provider: ^3.0.2  # отмена запросов тайлов на вебе
+  latlong2: ^0.9.1           # координаты для flutter_map
+
+  # --- Файлы ---
+  file_picker: ^8.0.0        # выбор фото/договора для загрузки (FR-3.12/3.13)
+  url_launcher: ^6.3.0       # открытие PDF/документа во внешнем вьювере/вкладке
+
+  # --- Форматирование/локализация ---
+  # Версию не пинить ниже — flutter_localizations из Flutter SDK 3.27+ сам требует
+  # intl 0.20.2 (SDK version pinning), более старая версия ломает pub get.
+  intl: ^0.20.2              # суммы в сомах, даты
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0      # набор правил линтера
+  mocktail: ^1.0.4           # моки для тестов
+
+flutter:
+  uses-material-design: true
+  generate: true             # генерация локализаций из .arb (см. l10n позже)

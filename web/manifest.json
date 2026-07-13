@@ -1,0 +1,11 @@
+{
+  "name": "LED Dashboard KG",
+  "short_name": "LED Dashboard",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#4C12A1",
+  "description": "Внутренний дашборд учёта LED-экранов по Кыргызстану",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}

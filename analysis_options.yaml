@@ -1,0 +1,27 @@
+# =============================================================================
+# analysis_options.yaml — правила статического анализа (dart analyze).
+#
+# База — flutter_lints (официальный набор). Несколько правил ужесточаем под
+# конвенции проекта из frontend/CONTEXT.md §8 (const/final, без dynamic и т.п.).
+# =============================================================================
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true       # запрещает неявные приведения (меньше рантайм-сюрпризов)
+    strict-raw-types: true   # запрещает «сырые» дженерики без параметров типов
+  errors:
+    # Отсутствие типа в публичном API — ошибка, а не предупреждение.
+    always_declare_return_types: error
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    always_declare_return_types: true
+    avoid_print: true               # в проде вместо print — логгер/дебаг
+    require_trailing_commas: true   # удобные диффы и автоформат
+    sort_child_properties_last: true
