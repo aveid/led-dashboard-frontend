@@ -1,0 +1,14 @@
+# .dockerignore — не тащить в контекст сборки то, что не нужно/будет создано заново.
+
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.git/
+.gitignore
+
+# Артефакты локальной IDE/тестов — не нужны для web-сборки.
+.idea/
+.vscode/
+test/
+coverage/
