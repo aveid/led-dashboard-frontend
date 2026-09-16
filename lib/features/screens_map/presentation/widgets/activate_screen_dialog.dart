@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../features/dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../providers/screens_providers.dart';
@@ -85,6 +86,9 @@ class _ActivateScreenDialogState extends ConsumerState<ActivateScreenDialog> {
     result.when(
       onSuccess: (_) {
         ref.invalidate(screensProvider);
+        // Активация задаёт цену/статус/срок аренды — сводка дашборда (FR-9)
+        // тоже устаревает и должна перезапросить данные.
+        ref.invalidate(dashboardSummaryProvider);
         Navigator.of(context).pop();
       },
       onFailure: (failure) {

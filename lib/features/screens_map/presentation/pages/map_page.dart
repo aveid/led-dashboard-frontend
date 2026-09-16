@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../features/dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../../shared/widgets/admin_only.dart';
 import '../../../auth/presentation/controllers/auth_providers.dart';
 import '../../domain/entities/kg_boundary.dart';
@@ -144,8 +145,9 @@ class _MapPageState extends ConsumerState<MapPage> {
     }
   }
 
-  /// Контекстное меню по существующему маркеру (FR-3.3): «Поменять локацию».
-  /// RBAC: relocation — admin only; для не-admin меню не открываем.
+  /// Контекстное меню по существующему маркеру (FR-3.3): «Поменять локацию» /
+  /// «Удалить экран». RBAC: обе записывающие операции — admin only; для
+  /// не-admin меню не открываем.
   Future<void> _showMoveMenu(Offset globalPos, Screen screen) async {
     if (!ref.read(isAdminProvider)) return;
     final picked = await showMenu<String>(
@@ -157,12 +159,62 @@ class _MapPageState extends ConsumerState<MapPage> {
           height: 48, // tap target ≥ 48px
           child: Text('Поменять локацию'),
         ),
+        PopupMenuItem(
+          value: 'delete',
+          height: 48, // tap target ≥ 48px
+          child: Text('Удалить экран', style: TextStyle(color: AppColors.danger)),
+        ),
       ],
     );
-    if (picked != 'move' || !mounted) return;
-    ref.read(relocationNotifierProvider.notifier).beginRelocation(screen);
-    // Ставим центр карты на текущую точку экрана, чтобы пин стартовал на маркере.
-    _mapController.move(LatLng(screen.latitude, screen.longitude), _mapController.camera.zoom);
+    if (!mounted) return;
+    if (picked == 'move') {
+      ref.read(relocationNotifierProvider.notifier).beginRelocation(screen);
+      // Ставим центр карты на текущую точку экрана, чтобы пин стартовал на маркере.
+      _mapController.move(LatLng(screen.latitude, screen.longitude), _mapController.camera.zoom);
+    } else if (picked == 'delete') {
+      await _confirmAndDeleteScreen(screen);
+    }
+  }
+
+  /// Подтверждение + удаление экрана (жест на карте). Необратимое действие —
+  /// центральный диалог-подтверждение (правило UI), как у удаления вложения
+  /// в `screen_card_sheet.dart`.
+  Future<void> _confirmAndDeleteScreen(Screen screen) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Удалить экран'),
+        content: Text('Удалить экран «${screen.name}»? Это действие необратимо.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Удалить', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final result = await ref.read(deleteScreenUseCaseProvider).call(screen.id);
+    if (!mounted) return;
+
+    result.when(
+      onSuccess: (_) {
+        ref.invalidate(screensProvider);
+        // Удаление меняет счётчики/суммы сводки (FR-9) — тоже устаревает.
+        ref.invalidate(dashboardSummaryProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Экран удалён.')),
+        );
+      },
+      onFailure: (failure) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось удалить экран: ${failure.message}')),
+      ),
+    );
   }
 
   /// «Сохранить» в режиме перемещения: центр карты → `PATCH /location` → refetch.

@@ -95,4 +95,9 @@ abstract interface class ScreensRepository {
     required String screenId,
     required String attachmentId,
   });
+
+  /// Удаляет экран целиком (`DELETE /api/screens/{id}`) — жест на карте (правый
+  /// клик/долгий тап по маркеру → «Удалить экран»). Возврата экрана нет — сервер
+  /// отвечает `204`, вызывающий сам инвалидирует [screensProvider] и сводку.
+  Future<Result<void>> deleteScreen(String id);
 }
