@@ -6,13 +6,21 @@ import '../../features/auth/presentation/controllers/auth_providers.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 // (auth_providers даёт currentUserProvider для guard раздела «Пользователи»)
 import '../../features/campaigns/presentation/pages/campaigns_page.dart';
+import '../../features/campaigns/presentation/providers/campaigns_providers.dart';
 import '../../features/cities/presentation/pages/cities_page.dart';
+import '../../features/cities/presentation/providers/cities_providers.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../features/dashboard/presentation/providers/dashboard_providers.dart';
 import '../../features/landlords/presentation/pages/landlords_page.dart';
+import '../../features/landlords/presentation/providers/landlords_providers.dart';
 import '../../features/screen_types/presentation/pages/screen_types_page.dart';
+import '../../features/screen_types/presentation/providers/screen_types_providers.dart';
 import '../../features/screens_map/presentation/pages/map_page.dart';
+import '../../features/screens_map/presentation/providers/reference_providers.dart';
+import '../../features/screens_map/presentation/providers/screens_providers.dart';
 import '../../features/users/domain/entities/user_role.dart';
 import '../../features/users/presentation/pages/users_page.dart';
+import '../../features/users/presentation/providers/users_providers.dart';
 import 'app_shell.dart';
 
 /// Пути приложения (в одном месте, без «магических» строк по коду).
@@ -110,9 +118,41 @@ final routerProvider = Provider<GoRouter>((ref) {
 /// [isAuthenticatedProvider] (вход/выход).
 class RouterRefreshNotifier extends ChangeNotifier {
   RouterRefreshNotifier(Ref ref) {
-    ref.listen(isAuthenticatedProvider, (_, __) => notifyListeners());
+    ref.listen(isAuthenticatedProvider, (previous, next) {
+      notifyListeners();
+      // Сессия только что появилась (первый вход ИЛИ повторный — например,
+      // после того как токен протух и dio-интерсептор молча разлогинил
+      // пользователя на 401, см. `dio_client.dart`). Без этого каждый раздел
+      // (карта/дашборд/арендодатели/...) оставался бы в старом состоянии —
+      // старых данных или ошибки 401 — до ручного «Обновить» на каждой
+      // странице. Сбрасываем всё разом здесь же, при появлении сессии, а не
+      // на 401 в интерсепторе: интерсептор в `core/network` не должен знать
+      // про провайдеры фич (нарушило бы границы Clean Architecture), а роутер
+      // — уже общий для всех фич композиционный корень.
+      if (next.valueOrNull == true && previous?.valueOrNull != true) {
+        _invalidateAllSectionData(ref);
+      }
+    });
     // Роль влияет на guard раздела «Пользователи»: когда `/auth/me` догрузится
     // (loading → data), пересчитываем redirect, чтобы не-admin ушёл с /users.
     ref.listen(currentUserProvider, (_, __) => notifyListeners());
+  }
+
+  /// Инвалидирует все провайдеры-списки данных разделов разом, чтобы каждый
+  /// раздел перезапросил свежие данные при следующем открытии (лениво —
+  /// `FutureProvider`/`AsyncNotifier` не тянут сеть, пока их никто не смотрит).
+  void _invalidateAllSectionData(Ref ref) {
+    ref.invalidate(screensProvider);
+    ref.invalidate(costSummaryProvider);
+    ref.invalidate(landlordNamesProvider);
+    ref.invalidate(campaignNamesProvider);
+    ref.invalidate(dashboardSummaryProvider);
+    ref.invalidate(landlordsListProvider);
+    ref.invalidate(landlordScreensProvider);
+    ref.invalidate(citiesProvider);
+    ref.invalidate(activeCitiesProvider);
+    ref.invalidate(screenTypesProvider);
+    ref.invalidate(campaignsListProvider);
+    ref.invalidate(usersProvider);
   }
 }

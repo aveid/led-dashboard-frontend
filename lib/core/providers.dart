@@ -15,7 +15,22 @@ final tokenStorageProvider = Provider<TokenStorage>((ref) {
 });
 
 /// Настроенный dio-клиент (с JWT-интерсептором).
+///
+/// [DioClient.onUnauthorized] бампает [sessionEpochProvider] на 401 — так
+/// сетевой слой сигналит наверх о протухшей сессии, не зная о провайдере
+/// авторизации напрямую (иначе core/ зависел бы от features/auth/, а тот уже
+/// зависит от core/ — цикл). `isAuthenticatedProvider` следит за эпохой и
+/// пересчитывается, роутер уводит пользователя на /login (см. auth_providers.dart).
 final dioClientProvider = Provider<DioClient>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);
-  return DioClient(tokenStorage);
+  return DioClient(
+    tokenStorage,
+    onUnauthorized: () => ref.read(sessionEpochProvider.notifier).state++,
+  );
 });
+
+/// Счётчик «эпох» сессии. Растёт при каждом принудительном завершении сессии
+/// на сетевом уровне (401 у любого запроса, кроме самого входа — см.
+/// `dio_client.dart`). Сам по себе ничего не значит — нужен только как повод
+/// для зависимых провайдеров пересчитаться (см. [dioClientProvider] выше).
+final sessionEpochProvider = StateProvider<int>((ref) => 0);

@@ -65,14 +65,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   AppTextField(
                     label: 'Логин',
                     controller: _usernameController,
-                    hintText: 'admin',
+                    // Не показываем "admin" — с обычным (не приглушённым) цветом
+                    // подсказки это читалось как уже введённое значение, а не
+                    // как пример/плейсхолдер (см. hintStyle в app_theme.dart).
+                    hintText: 'Введите логин',
                     autofocus: true,
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
                     label: 'Пароль',
                     controller: _passwordController,
-                    hintText: '••••••••',
+                    // Не точки — они выглядели как уже введённый пароль.
+                    hintText: 'Введите пароль',
                     obscureText: true,
                     onSubmitted: (_) => _submit(),
                   ),
