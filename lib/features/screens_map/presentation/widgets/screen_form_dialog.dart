@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../features/cities/domain/entities/city.dart';
 import '../../../../features/cities/presentation/providers/cities_providers.dart';
+import '../../../../features/dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../../features/screen_types/domain/entities/screen_type.dart';
 import '../../../../features/screen_types/presentation/providers/screen_types_providers.dart';
 import '../../../../shared/domain/screen_status.dart';
@@ -160,6 +161,9 @@ class _ScreenFormDialogState extends ConsumerState<ScreenFormDialog> {
     result.when(
       onSuccess: (_) {
         ref.invalidate(screensProvider);
+        // Создание/правка меняет статус, цену, арендодателя или срок аренды —
+        // всё это входит в сводку дашборда (FR-9), поэтому она тоже устаревает.
+        ref.invalidate(dashboardSummaryProvider);
         Navigator.of(context).pop();
       },
       onFailure: (failure) {

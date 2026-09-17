@@ -45,6 +45,10 @@ abstract final class AppTheme {
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        // Без этого hint наследует цвет обычного текста и визуально неотличим
+        // от реально введённого значения (легко принять подсказку за значение
+        // по умолчанию — так и произошло с плейсхолдером "admin" на логине).
+        hintStyle: const TextStyle(color: AppColors.textMuted),
         border: _inputBorder(AppColors.border),
         enabledBorder: _inputBorder(AppColors.border),
         focusedBorder: _inputBorder(AppColors.primary, width: 1.5),

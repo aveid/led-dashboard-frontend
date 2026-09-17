@@ -9,6 +9,7 @@ import '../../domain/repositories/screens_repository.dart';
 import '../../domain/usecases/activate_screen_usecase.dart';
 import '../../domain/usecases/create_screen_usecase.dart';
 import '../../domain/usecases/delete_attachment_usecase.dart';
+import '../../domain/usecases/delete_screen_usecase.dart';
 import '../../domain/usecases/export_screens_usecase.dart';
 import '../../domain/usecases/get_cost_summary_usecase.dart';
 import '../../domain/usecases/get_screens_usecase.dart';
@@ -59,6 +60,10 @@ final uploadAttachmentUseCaseProvider = Provider<UploadAttachmentUseCase>((ref) 
 
 final deleteAttachmentUseCaseProvider = Provider<DeleteAttachmentUseCase>((ref) {
   return DeleteAttachmentUseCase(ref.watch(screensRepositoryProvider));
+});
+
+final deleteScreenUseCaseProvider = Provider<DeleteScreenUseCase>((ref) {
+  return DeleteScreenUseCase(ref.watch(screensRepositoryProvider));
 });
 
 /// Список экранов для карты (FR-1.2), с учётом текущих фильтров (FR-5).

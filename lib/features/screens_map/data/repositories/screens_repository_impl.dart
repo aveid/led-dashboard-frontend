@@ -201,6 +201,16 @@ class ScreensRepositoryImpl implements ScreensRepository {
     }
   }
 
+  @override
+  Future<Result<void>> deleteScreen(String id) async {
+    try {
+      await _remote.deleteScreen(id);
+      return const Result.success(null);
+    } on ApiException catch (e) {
+      return Result.failure(e.toFailure());
+    }
+  }
+
   /// Сообщение лимита с учётом вида: фото vs документ (contract/other).
   Failure _limitFailure(AttachmentType type) {
     final isPhoto = type == AttachmentType.photo;

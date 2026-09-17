@@ -13,11 +13,16 @@ import 'token_storage.dart';
 /// пытаемся молча обновить токен, а чистим сессию — пользователя вернёт на экран
 /// входа. Когда на бэке появится refresh, логику добавим здесь же, в интерсепторе.
 class DioClient {
-  DioClient(this._tokenStorage) : dio = Dio(_baseOptions) {
+  DioClient(this._tokenStorage, {this.onUnauthorized}) : dio = Dio(_baseOptions) {
     dio.interceptors.add(_authInterceptor());
   }
 
   final TokenStorage _tokenStorage;
+
+  /// Вызывается после очистки токена на 401 (сессия протухла посреди работы).
+  /// Позволяет вызывающему слою (DI-сборка в `core/providers.dart`) отреагировать,
+  /// не заставляя этот класс знать о Riverpod-провайдерах фичи авторизации.
+  final void Function()? onUnauthorized;
 
   /// Настроенный экземпляр Dio для датасорсов.
   final Dio dio;
@@ -50,6 +55,7 @@ class DioClient {
         if (error.response?.statusCode == 401 &&
             error.requestOptions.path != ApiConstants.authToken) {
           await _tokenStorage.clear();
+          onUnauthorized?.call();
         }
         handler.next(error);
       },

@@ -36,7 +36,10 @@ services:
 
   # --- Хранилище файлов (S3-совместимое), для фото и договоров ---
   minio:
-    image: minio/minio:latest
+    # MinIO больше не публикует образ на Docker Hub без логина (лицензионное
+    # изменение 2024): docker.io/minio/minio тянется с "pull access denied".
+    # quay.io/minio/minio — актуальный публичный источник того же образа.
+    image: quay.io/minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minio
@@ -55,9 +58,14 @@ services:
 
   # --- Backend (FastAPI): применяет миграции и поднимает сервер ---
   backend:
-    build: .
+    build:
+      # Соседняя папка led-dashboard-backend/ рядом с led-dashboard-frontend/.
+      context: ../led-dashboard-backend
+      # Нет Dockerfile в корне backend — собираем по devops/Dockerfile
+      # (приватный registry Megacom + корпоративный прокси, см. сам файл).
+      dockerfile: devops/Dockerfile
     env_file:
-      - .env   # SECRET_KEY, время жизни токена, демо-учётка (см. .env.example)
+      - ../led-dashboard-backend/.env   # SECRET_KEY, время жизни токена, демо-учётка (см. .env.example)
     environment:
       # Внутри сети compose сервис БД называется "db", а не "localhost".
       DATABASE_URL: postgresql+psycopg://led:led@db:5432/led_dashboard
@@ -94,7 +102,7 @@ services:
   # --- Frontend (Flutter Web): собран в статику, отдаётся через nginx ---
   frontend:
     build:
-      context: ../frontend       # соседняя папка frontend/ рядом с backend/
+      context: .   # этот файл уже лежит в led-dashboard-frontend/
       dockerfile: Dockerfile
       args:
         # Адрес backend'а "запекается" в сборку на этапе flutter build web —

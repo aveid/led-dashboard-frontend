@@ -32,8 +32,13 @@ final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
 /// Признак аутентификации пользователя (есть ли валидная сессия).
 ///
 /// От него зависит редирект в go_router: нет сессии → на /login. Меняется при
-/// входе/выходе через [AuthController], который инвалидирует этот провайдер.
+/// входе/выходе через [LoginController], который инвалидирует этот провайдер,
+/// а также при протухании токена посреди работы — `ref.watch(sessionEpochProvider)`
+/// заставляет пересчитаться, когда dio-интерсептор ловит 401 и бампает эпоху
+/// (см. `core/providers.dart`/`dio_client.dart`), иначе роутер держал бы
+/// пользователя на текущей странице со старой (уже недействительной) сессией.
 final isAuthenticatedProvider = FutureProvider<bool>((ref) {
+  ref.watch(sessionEpochProvider);
   return ref.watch(authRepositoryProvider).isAuthenticated();
 });
 

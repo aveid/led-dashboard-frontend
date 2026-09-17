@@ -237,6 +237,15 @@ class ScreensRemoteDataSource {
     }
   }
 
+  /// Удаляет экран (`DELETE /api/screens/{id}`). Бросает [ApiException].
+  Future<void> deleteScreen(String id) async {
+    try {
+      await _dio.delete<void>('${ApiConstants.screens}/$id');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// Переводит доменные фильтры в query-параметры бэка (имена — как в
   /// `GET /api/screens`: `landlord_id`, `status_filter`, `city_id`, `campaign_id`,
   /// `contract_end_before` в формате `YYYY-MM-DD`). Строковый `city` больше не
